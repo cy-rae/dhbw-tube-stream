@@ -1,0 +1,4 @@
+Flask
+minio
+Flask-SQLAlchemy
+psycopg2-binary
