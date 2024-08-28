@@ -1,9 +1,10 @@
 """Endpoint for reading video related data and streaming from MinIO"""
 
-from flask import Blueprint, jsonify, request, Response
+from flask import Blueprint, jsonify, request, Response, send_file
 from .models import db, Video
 from minio import Minio
 import os
+from io import BytesIO
 
 streaming_api = Blueprint(name='streaming_api', import_name=__name__)
 
@@ -15,7 +16,8 @@ minio_client = Minio(
     secure=False
 )
 
-bucket_name = "video-files"
+video_bucket_name = "video-files"
+cover_bucket_name = "video-covers"
 
 @streaming_api.route(rule='/videos', methods=['GET'])
 def list_videos():
@@ -47,9 +49,24 @@ def stream_video(video_id):
         return jsonify({'error': 'Video not found'}), 404
 
     try:
-        response = minio_client.get_object(bucket_name, video.filename)
+        response = minio_client.get_object(video_bucket_name, video.video_filename)
         return Response(response.stream(32*1024),
                         content_type='video/mp4',
-                        headers={"Content-Disposition": f"inline; filename={video.filename}"})
+                        headers={"Content-Disposition": f"inline; filename={video.video_filename}"})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@streaming_api.route('/video/cover/<video_id>', methods=['GET'])
+def get_video_cover(video_id):
+    """Returns the cover image of a video based on the video ID"""
+    video = Video.query.get(video_id)
+    if not video:
+        return jsonify({'error': 'Video not found'}), 404
+
+    try:
+        response = minio_client.get_object(cover_bucket_name, video.cover_filename)
+        # Reading the image into memory and returning it
+        image_data = BytesIO(response.read())
+        return send_file(image_data, mimetype='image/jpeg', as_attachment=False, download_name=video.cover_filename)
     except Exception as e:
         return jsonify({'error': str(e)}), 500

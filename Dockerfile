@@ -7,9 +7,9 @@ WORKDIR /app
 # Copy the requirements.txt in the working directory
 COPY requirements.txt .
 
-# Set proxy environment variables for Bosch environment
-ENV http_proxy=http://rb-proxy-de.bosch.com:8080
-ENV https_proxy=http://rb-proxy-de.bosch.com:8080
+## Set proxy environment variables for Bosch environment
+#ENV http_proxy=http://rb-proxy-de.bosch.com:8080
+#ENV https_proxy=http://rb-proxy-de.bosch.com:8080
 
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
