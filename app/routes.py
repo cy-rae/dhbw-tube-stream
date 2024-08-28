@@ -21,12 +21,6 @@ minio_client = Minio(
 video_bucket_name = "video-files"
 cover_bucket_name = "video-covers"
 
-@streaming_api.route(rule='/videos', methods=['GET'])
-def list_videos():
-    """Returns a list of all video IDs"""
-    videos = VideoMetadata.query.with_entities(VideoMetadata.id).all()
-    video_ids = [video.id for video in videos]
-    return jsonify(video_ids), 200
 
 @streaming_api.route('/video/<video_id>', methods=['GET'])
 def get_video_metadata(video_id):
