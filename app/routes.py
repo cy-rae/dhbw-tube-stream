@@ -1,12 +1,14 @@
 """Endpoint for reading video related data and streaming from MinIO"""
 
 from flask import Blueprint, jsonify, request, Response, send_file
-from .models import db, Video
+from .models import db, VideoMetadata
 from minio import Minio
+from datetime import datetime
 import os
 from io import BytesIO
 
 streaming_api = Blueprint(name='streaming_api', import_name=__name__)
+search_api = Blueprint(name='search_api', import_name=__name__)
 
 # MinIO Client Setup
 minio_client = Minio(
@@ -22,14 +24,14 @@ cover_bucket_name = "video-covers"
 @streaming_api.route(rule='/videos', methods=['GET'])
 def list_videos():
     """Returns a list of all video IDs"""
-    videos = Video.query.with_entities(Video.id).all()
+    videos = VideoMetadata.query.with_entities(VideoMetadata.id).all()
     video_ids = [video.id for video in videos]
     return jsonify(video_ids), 200
 
 @streaming_api.route('/video/<video_id>', methods=['GET'])
 def get_video_metadata(video_id):
     """Returns the metadata of a video based on the video ID"""
-    video = Video.query.get(video_id)
+    video = VideoMetadata.query.get(video_id)
     if video:
         return jsonify({
             'id': video.id,
@@ -44,7 +46,7 @@ def get_video_metadata(video_id):
 @streaming_api.route('/video/stream/<video_id>', methods=['GET'])
 def stream_video(video_id):
     """Streams the video based on the video ID"""
-    video = Video.query.get(video_id)
+    video = VideoMetadata.query.get(video_id)
     if not video:
         return jsonify({'error': 'Video not found'}), 404
 
@@ -59,7 +61,7 @@ def stream_video(video_id):
 @streaming_api.route('/video/cover/<video_id>', methods=['GET'])
 def get_video_cover(video_id):
     """Returns the cover image of a video based on the video ID"""
-    video = Video.query.get(video_id)
+    video = VideoMetadata.query.get(video_id)
     if not video:
         return jsonify({'error': 'Video not found'}), 404
 
@@ -70,3 +72,58 @@ def get_video_cover(video_id):
         return send_file(image_data, mimetype='image/jpeg', as_attachment=False, download_name=video.cover_filename)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@search_api.route('/videos/search', methods=['GET'])
+def search_videos():
+    """Search for videos based on various filters like title, creator, and upload date."""
+    # Extract query parameters
+    title = request.args.get('title')
+    creator = request.args.get('creator')
+    upload_date = request.args.get('upload_date')
+    description = request.args.get('description')
+    sort_by = request.args.get('sort_by', 'upload_date')  # Default sorting by upload date
+    order = request.args.get('order', 'asc')  # Default order ascending
+    page = request.args.get('page', 1, type=int)  # Default page number is 1
+    per_page = request.args.get('per_page', 10, type=int)  # Default items per page is 10
+
+    # Start with base query
+    query = VideoMetadata.query
+
+    # Apply filters
+    if title:
+        query = query.filter(VideoMetadata.title.ilike(f'%{title}%'))
+    if creator:
+        query = query.filter(VideoMetadata.creator.ilike(f'%{creator}%'))
+    if description:
+        query = query.filter(VideoMetadata.description.ilike(f'%{description}%'))
+    if upload_date:
+        try:
+            # Convert string to datetime object
+            upload_date_obj = datetime.strptime(upload_date, '%Y-%m-%d')
+            query = query.filter(db.func.date(VideoMetadata.upload_date) == upload_date_obj.date())
+        except ValueError:
+            return jsonify({'error': 'Invalid date format. Please use YYYY-MM-DD.'}), 400
+
+    # Apply sorting
+    if sort_by in ['title', 'creator', 'upload_date']:
+        if order == 'desc':
+            query = query.order_by(getattr(VideoMetadata, sort_by).desc())
+        else:
+            query = query.order_by(getattr(VideoMetadata, sort_by).asc())
+    else:
+        return jsonify({'error': f'Invalid sort_by field: {sort_by}'}), 400
+
+    # Apply pagination
+    paginated_results = query.paginate(page=page, per_page=per_page, error_out=False)
+    
+    # Retrieve video IDs from the paginated results
+    video_ids = [video.id for video in paginated_results.items]
+
+    # Return results with pagination metadata
+    return jsonify({
+        'videos': video_ids,
+        'total': paginated_results.total,
+        'pages': paginated_results.pages,
+        'current_page': paginated_results.page,
+        'per_page': paginated_results.per_page
+    }), 200
