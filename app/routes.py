@@ -8,7 +8,6 @@ import os
 from io import BytesIO
 
 streaming_api = Blueprint(name='streaming_api', import_name=__name__)
-search_api = Blueprint(name='search_api', import_name=__name__)
 
 # MinIO Client Setup
 minio_client = Minio(
@@ -67,7 +66,7 @@ def get_video_cover(video_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@search_api.route('/videos/search', methods=['GET'])
+@streaming_api.route('/videos/search', methods=['GET'])
 def search_videos():
     """Search for videos based on various filters like title, creator, and upload date."""
     # Extract query parameters
