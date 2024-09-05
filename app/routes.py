@@ -36,6 +36,7 @@ def get_video_metadata(video_id):
     else:
         return jsonify({'error': 'Video not found'}), 404
 
+
 @streaming_api.route('/video/stream/<video_id>', methods=['GET'])
 def stream_video(video_id):
     """Streams the video based on the video ID"""
@@ -45,11 +46,12 @@ def stream_video(video_id):
 
     try:
         response = minio_client.get_object(video_bucket_name, video.video_filename)
-        return Response(response.stream(32*1024),
+        return Response(response.stream(32 * 1024),
                         content_type='video/mp4',
                         headers={"Content-Disposition": f"inline; filename={video.video_filename}"})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 
 @streaming_api.route('/video/cover/<video_id>', methods=['GET'])
 def get_video_cover(video_id):
@@ -65,6 +67,7 @@ def get_video_cover(video_id):
         return send_file(image_data, mimetype='image/jpeg', as_attachment=False, download_name=video.cover_filename)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 
 @streaming_api.route('/videos/search', methods=['GET'])
 def search_videos():
@@ -108,7 +111,7 @@ def search_videos():
 
     # Apply pagination
     paginated_results = query.paginate(page=page, per_page=per_page, error_out=False)
-    
+
     # Retrieve video IDs from the paginated results
     video_ids = [video.id for video in paginated_results.items]
 
