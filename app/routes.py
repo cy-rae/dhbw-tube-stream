@@ -24,14 +24,14 @@ cover_bucket_name = "video-covers"
 @streaming_api.route('/video/<video_id>', methods=['GET'])
 def get_video_metadata(video_id):
     """Returns the metadata of a video based on the video ID"""
-    video = VideoMetadata.query.get(video_id)
-    if video:
+    video_metadata = VideoMetadata.query.get(video_id)
+    if video_metadata:
         return jsonify({
-            'id': video.id,
-            'title': video.title,
-            'creator': video.creator,
-            'description': video.description,
-            'upload_date': video.upload_date
+            'id': video_metadata.id,
+            'title': video_metadata.title,
+            'creator': video_metadata.creator,
+            'description': video_metadata.description,
+            'upload_date': video_metadata.upload_date
         }), 200
     else:
         return jsonify({'error': 'Video not found'}), 404
@@ -113,11 +113,12 @@ def search_videos():
     paginated_results = query.paginate(page=page, per_page=per_page, error_out=False)
 
     # Retrieve video IDs from the paginated results
-    video_ids = [video.id for video in paginated_results.items]
+    #video_ids = [video.id for video in paginated_results.items]
 
     # Return results with pagination metadata
     return jsonify({
-        'videos': video_ids,
+        #'videos': video_ids,
+        'videos': paginated_results.items,
         'total': paginated_results.total,
         'pages': paginated_results.pages,
         'current_page': paginated_results.page,
