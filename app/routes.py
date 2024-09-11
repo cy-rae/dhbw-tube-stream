@@ -2,7 +2,6 @@
 
 from flask import Blueprint, jsonify, request, Response, send_file
 
-from .error_messages import VIDEO_NOT_FOUND
 from app.models.video_metadata import db, VideoMetadata
 from minio import Minio
 from datetime import datetime
@@ -22,6 +21,8 @@ minio_client = Minio(
 video_bucket_name = "video-files"
 cover_bucket_name = "video-covers"
 
+video_not_found = 'Video not found.'
+
 
 @streaming_api.route('/video/<video_id>', methods=['GET'])
 def get_video_metadata(video_id):
@@ -36,7 +37,7 @@ def get_video_metadata(video_id):
             'upload_date': video_metadata.upload_date
         }), 200
     else:
-        return jsonify({'error': VIDEO_NOT_FOUND}), 404
+        return jsonify({'error': video_not_found}), 404
 
 
 @streaming_api.route('/video/stream/<video_id>', methods=['GET'])
@@ -44,7 +45,7 @@ def stream_video(video_id):
     """Streams the video based on the video ID"""
     video = VideoMetadata.query.get(video_id)
     if not video:
-        return jsonify({'error': VIDEO_NOT_FOUND}), 404
+        return jsonify({'error': video_not_found}), 404
 
     try:
         response = minio_client.get_object(video_bucket_name, video.video_filename)
@@ -59,7 +60,7 @@ def get_video_cover(video_id):
     """Returns the cover image of a video based on the video ID"""
     video = VideoMetadata.query.get(video_id)
     if not video:
-        return jsonify({'error': VIDEO_NOT_FOUND}), 404
+        return jsonify({'error': video_not_found}), 404
 
     try:
         response = minio_client.get_object(cover_bucket_name, video.cover_filename)
@@ -118,7 +119,7 @@ def search_videos():
 
     # Return results with pagination metadata
     return jsonify({
-        #'videos': video_ids,
+        # 'videos': video_ids,
         'videos': videos,
         'total': paginated_results.total,
         'pages': paginated_results.pages,
