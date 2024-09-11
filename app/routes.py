@@ -1,6 +1,8 @@
 """Endpoint for reading video related data and streaming from MinIO"""
 
 from flask import Blueprint, jsonify, request, Response, send_file
+
+from .error_messages import VIDEO_NOT_FOUND
 from .models import db, VideoMetadata
 from minio import Minio
 from datetime import datetime
@@ -34,7 +36,7 @@ def get_video_metadata(video_id):
             'upload_date': video_metadata.upload_date
         }), 200
     else:
-        return jsonify({'error': 'Video not found'}), 404
+        return jsonify({'error': VIDEO_NOT_FOUND}), 404
 
 
 @streaming_api.route('/video/stream/<video_id>', methods=['GET'])
@@ -42,12 +44,11 @@ def stream_video(video_id):
     """Streams the video based on the video ID"""
     video = VideoMetadata.query.get(video_id)
     if not video:
-        return jsonify({'error': 'Video not found'}), 404
+        return jsonify({'error': VIDEO_NOT_FOUND}), 404
 
     try:
         response = minio_client.get_object(video_bucket_name, video.video_filename)
         return Response(response.stream(32 * 1024),
-                        content_type='video/mp4',
                         headers={"Content-Disposition": f"inline; filename={video.video_filename}"})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -58,13 +59,13 @@ def get_video_cover(video_id):
     """Returns the cover image of a video based on the video ID"""
     video = VideoMetadata.query.get(video_id)
     if not video:
-        return jsonify({'error': 'Video not found'}), 404
+        return jsonify({'error': VIDEO_NOT_FOUND}), 404
 
     try:
         response = minio_client.get_object(cover_bucket_name, video.cover_filename)
         # Reading the image into memory and returning it
         image_data = BytesIO(response.read())
-        return send_file(image_data, mimetype='image/jpeg', as_attachment=False, download_name=video.cover_filename)
+        return send_file(image_data, as_attachment=False, download_name=video.cover_filename)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -112,13 +113,13 @@ def search_videos():
     # Apply pagination
     paginated_results = query.paginate(page=page, per_page=per_page, error_out=False)
 
-    # Retrieve video IDs from the paginated results
-    #video_ids = [video.id for video in paginated_results.items]
+    # Convert video metadata to dictionary
+    videos = [video.to_dict() for video in paginated_results.items]
 
     # Return results with pagination metadata
     return jsonify({
         #'videos': video_ids,
-        'videos': paginated_results.items,
+        'videos': videos,
         'total': paginated_results.total,
         'pages': paginated_results.pages,
         'current_page': paginated_results.page,

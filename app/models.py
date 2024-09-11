@@ -17,3 +17,12 @@ class VideoMetadata(db.Model):
 
     def __repr__(self):
         return f'<Video {self.title}>'
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'creator': self.creator,
+            'description': self.description,
+            'upload_date': self.upload_date
+        }
