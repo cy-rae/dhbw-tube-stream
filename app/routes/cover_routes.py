@@ -23,6 +23,6 @@ def get_video_cover(video_id):
         response = minio_client.get_object(cover_bucket_name, video.cover_filename)
         # Reading the image into memory and returning it
         image_data = BytesIO(response.read())
-        return send_file(image_data, as_attachment=False, download_name=video.cover_filename)
+        return send_file(image_data, mimetype=video.cover_mime_type, as_attachment=False, download_name=video.cover_filename)
     except Exception as e:
         return jsonify({'error': str(e)}), 500

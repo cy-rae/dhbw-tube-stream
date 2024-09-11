@@ -12,6 +12,16 @@ video_api = Blueprint(name='video_api', import_name=__name__)
 video_bucket_name = "video-files"
 
 
+@video_api.route('/video/<video_id>', methods=['GET'])
+def get_video_metadata(video_id):
+    """Returns the metadata of a video based on the video ID"""
+    video_metadata = VideoMetadata.query.get(video_id)
+    if video_metadata:
+        return jsonify(video_metadata.to_json()), 200
+    else:
+        return jsonify({'error': 'Video not found'}), 404
+
+
 @video_api.route('/video/stream/<video_id>', methods=['GET'])
 def stream_video(video_id):
     """Streams the video based on the video ID"""
@@ -21,7 +31,8 @@ def stream_video(video_id):
 
     try:
         response = minio_client.get_object(video_bucket_name, video.video_filename)
-        return Response(response.stream(32 * 1024),
+        logging.info(f'Video MIME type: {video.video_mime_type}')
+        return Response(response.stream(32 * 1024), mimetype=video.video_mime_type,
                         headers={"Content-Disposition": f"inline; filename={video.video_filename}"})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -49,7 +60,7 @@ def search_videos():
     paginated_results = query.paginate(page=page, per_page=per_page, error_out=False)
 
     # Convert video metadata to dictionary
-    videos = [video.to_dict() for video in paginated_results.items]
+    videos = [video.to_json_as_listing() for video in paginated_results.items]
 
     # Return results with pagination metadata
     return jsonify({
