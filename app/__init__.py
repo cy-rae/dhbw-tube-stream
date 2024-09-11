@@ -3,8 +3,9 @@
 from flask import Flask
 from flask_cors import CORS
 
-from .models.video_metadata import db
-from .routes import streaming_api
+from app.models.video_metadata import db
+from app.routes.cover_routes import cover_api
+from app.routes.video_routes import video_api
 
 
 def create_app():
@@ -18,6 +19,7 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     db.init_app(app)
-    app.register_blueprint(streaming_api)
+    app.register_blueprint(cover_api)
+    app.register_blueprint(video_api)
 
     return app
