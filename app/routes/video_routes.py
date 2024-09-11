@@ -3,10 +3,16 @@ Routes for video metadata and video streaming.
 """
 from flask import Blueprint, jsonify, request, Response
 from datetime import datetime
+import re
+
+from minio import S3Error
 
 from app.models.minio_client import minio_client
 from app.models.video_metadata import db, VideoMetadata
+import logging
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 video_api = Blueprint(name='video_api', import_name=__name__)
 
 video_bucket_name = "video-files"
@@ -30,12 +36,47 @@ def stream_video(video_id):
         return jsonify({'error': 'Video not found.'}), 404
 
     try:
+        # Hole Metadaten des Objekts (z.B. Dateigröße)
+        stat = minio_client.stat_object(video_bucket_name, video.video_filename)
+        file_size = stat.size
+
+        # Hole das Video-Objekt von MinIO
         response = minio_client.get_object(video_bucket_name, video.video_filename)
-        logging.info(f'Video MIME type: {video.video_mime_type}')
-        return Response(response.stream(32 * 1024), mimetype=video.video_mime_type,
-                        headers={"Content-Disposition": f"inline; filename={video.video_filename}"})
+
+        # Range-Header prüfen
+        range_header = request.headers.get('Range')
+        if range_header:
+            match = re.match(r'bytes=(\d+)-(\d*)', range_header)
+            if match:
+                byte1 = int(match.group(1))
+                byte2 = int(match.group(2)) if match.group(2) else file_size - 1
+                length = byte2 - byte1 + 1
+
+                # Daten für den Range-Request extrahieren
+                response_data = response.read()[byte1:byte2 + 1]
+                headers = {
+                    'Content-Range': f'bytes {byte1}-{byte2}/{file_size}',
+                    'Accept-Ranges': 'bytes',
+                    'Content-Length': str(length),
+                    'Content-Type': video.video_mime_type,
+                    'Content-Disposition': f'inline; filename={video.video_filename}'
+                }
+                return Response(response_data, status=206, headers=headers)
+        else:
+            # Kein Range-Request, ganzes Video senden
+            headers = {
+                'Content-Length': str(file_size),
+                'Content-Type': video.video_mime_type,
+                'Content-Disposition': f'inline; filename={video.video_filename}'
+            }
+            return Response(response, headers=headers)
+
+    except S3Error as e:
+        logging.critical(str(e))
+        return jsonify({'error': f'S3 Error: {str(e)}'}), 500
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        logging.critical(str(e))
+        return jsonify({'error': f'Internal Server Error: {str(e)}'}), 500
 
 
 @video_api.route('/videos/search', methods=['GET'])
@@ -45,16 +86,15 @@ def search_videos():
     title = request.args.get('title')
     creator = request.args.get('creator')
     upload_date = request.args.get('upload_date')
-    description = request.args.get('description')
     sort_by = request.args.get('sort_by', 'upload_date')  # Default sorting by upload date
     order = request.args.get('order', 'asc')  # Default order ascending
     page = request.args.get('page', 1, type=int)  # Default page number is 1
     per_page = request.args.get('per_page', 10, type=int)  # Default items per page is 10
 
     # Start with base query
-    query, error_message = create_filter_query(title, creator, upload_date, description, sort_by, order)
+    query, error_message = create_filter_query(title, creator, upload_date, sort_by, order)
     if query is None:
-        return jsonify({'error': f'Invalid sort_by field: {sort_by}'}), 400
+        return jsonify({'error': error_message}), 400
 
     # Apply pagination
     paginated_results = query.paginate(page=page, per_page=per_page, error_out=False)
@@ -72,8 +112,8 @@ def search_videos():
     }), 200
 
 
-def create_filter_query(title: str or None, creator: str or None, upload_date: str or None, description: str or None,
-                        sort_by: str, order: str) -> (db.Query or None, str):
+def create_filter_query(title: str or None, creator: str or None, upload_date: str or None, sort_by: str,
+                        order: str) -> (db.Query or None, str):
     """
     Create a video metadata query based on the provided filters.
     """
@@ -85,8 +125,6 @@ def create_filter_query(title: str or None, creator: str or None, upload_date: s
         query = query.filter(VideoMetadata.title.ilike(f'%{title}%'))
     if creator:
         query = query.filter(VideoMetadata.creator.ilike(f'%{creator}%'))
-    if description:
-        query = query.filter(VideoMetadata.description.ilike(f'%{description}%'))
     if upload_date:
         try:
             # Convert string to datetime object
