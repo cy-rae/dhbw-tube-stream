@@ -3,7 +3,7 @@
 from flask import Blueprint, jsonify, request, Response, send_file
 
 from .error_messages import VIDEO_NOT_FOUND
-from .models import db, VideoMetadata
+from app.models.video_metadata import db, VideoMetadata
 from minio import Minio
 from datetime import datetime
 import os

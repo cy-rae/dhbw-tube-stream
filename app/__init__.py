@@ -3,7 +3,7 @@
 from flask import Flask
 from flask_cors import CORS
 
-from .models import db
+from .models.video_metadata import db
 from .routes import streaming_api
 
 
