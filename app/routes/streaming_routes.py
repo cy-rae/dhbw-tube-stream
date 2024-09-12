@@ -1,10 +1,11 @@
 """
 This module contains the routes for streaming video files and cover images.
 """
-from flask import Blueprint, jsonify, request, Response
-import re
-from minio import S3Error
 import logging
+import re
+
+from flask import Blueprint, jsonify, request, Response
+from minio import S3Error
 
 from app.models.minio_client import minio_client
 from app.models.video_metadata import VideoMetadata

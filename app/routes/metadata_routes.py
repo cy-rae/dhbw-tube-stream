@@ -1,9 +1,10 @@
 """
 Routes for video metadata and video streaming.
 """
-from flask import Blueprint, jsonify, request
-from datetime import datetime
 import logging
+from datetime import datetime
+
+from flask import Blueprint, jsonify, request
 
 from app.models.video_metadata import db, VideoMetadata
 
@@ -56,7 +57,8 @@ def search_videos():
     }), 200
 
 
-def create_filter_query(title: str or None, creator: str or None, start_date: str or None, end_date: str or None, sort_by: str,
+def create_filter_query(title: str or None, creator: str or None, start_date: str or None, end_date: str or None,
+                        sort_by: str,
                         order: str) -> (db.Query or None, str):
     """
     Create a video metadata query based on the provided filters.

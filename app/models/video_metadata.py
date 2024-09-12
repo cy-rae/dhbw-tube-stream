@@ -1,7 +1,8 @@
 """Definition of the database model to save the video and metadata."""
 
-from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timezone
+
+from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
