@@ -58,8 +58,7 @@ def search_videos():
 
 
 def create_filter_query(title: str or None, creator: str or None, start_date: str or None, end_date: str or None,
-                        sort_by: str,
-                        order: str) -> (db.Query or None, str):
+                        sort_by: str, order: str) -> (db.Query or None, str):
     """
     Create a video metadata query based on the provided filters.
     """
