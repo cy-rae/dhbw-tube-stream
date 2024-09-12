@@ -4,6 +4,7 @@ from flask import Flask
 from flask_cors import CORS
 
 from app.models.video_metadata import db
+from app.routes.health_check_route import health_check_api
 from app.routes.metadata_routes import metadata_api
 from app.routes.streaming_routes import streaming_api
 
@@ -21,5 +22,6 @@ def create_app():
     db.init_app(app)
     app.register_blueprint(streaming_api)
     app.register_blueprint(metadata_api)
+    app.register_blueprint(health_check_api)
 
     return app
