@@ -20,6 +20,8 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     db.init_app(app)
+
+    # Register blueprints
     app.register_blueprint(streaming_api)
     app.register_blueprint(metadata_api)
     app.register_blueprint(health_check_api)
