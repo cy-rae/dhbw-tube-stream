@@ -4,7 +4,7 @@ from flask import Flask
 from flask_cors import CORS
 
 from app.models.video_metadata import db
-from app.routes.health_check_route import health_check_api
+from app.routes.health_check_routes import health_check_api
 from app.routes.metadata_routes import metadata_api
 from app.routes.streaming_routes import streaming_api
 
