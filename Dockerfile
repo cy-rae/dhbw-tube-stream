@@ -7,7 +7,7 @@ WORKDIR /app
 # Copy the requirements.txt in the working directory
 COPY requirements.txt .
 
-## Set proxy environment variables for Bosch environment
+## Todo: Set proxy environment variables for Bosch environment
 #ENV http_proxy=http://rb-proxy-de.bosch.com:8080
 #ENV https_proxy=http://rb-proxy-de.bosch.com:8080
 
