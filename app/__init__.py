@@ -1,4 +1,5 @@
 """Service for streaming videos and receiving related metadata."""
+import os
 
 from flask import Flask
 from flask_cors import CORS
@@ -10,14 +11,25 @@ from app.routes.streaming_routes import streaming_api
 
 
 def create_app():
+    # Create the Flask app
     app = Flask(__name__)
 
-    CORS(app, resources={r"/*": {"origins": "http://frontend-service"}})
+    # Enable CORS for the frontend
+    frontend_base_url = os.getenv('FRONTEND_BASE_URL', 'http://frontend-service')
+    CORS(app, resources={
+        r"/*": {
+            "origins": [
+                frontend_base_url
+            ]
+        }
+    })
 
-    # Connection to PostgreSQL database
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:password@postgres:5432/videos'
+    # Set environment variables for connection to PostgreSQL database
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI',
+                                                      'postgresql://postgres:password@postgres-service/videos')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+    # Initialize the database
     db.init_app(app)
 
     # Register blueprints

@@ -19,6 +19,7 @@ def get_video_metadata(video_id):
     if video_metadata:
         return jsonify(video_metadata.to_json()), 200
     else:
+        logging.error("Video not found.")
         return jsonify({'error': 'Video not found'}), 404
 
 

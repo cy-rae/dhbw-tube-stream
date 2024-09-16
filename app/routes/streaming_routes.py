@@ -21,6 +21,7 @@ def stream_cover(video_id) -> tuple[Response, int] | Response:
     """Streams the cover image based on the video ID"""
     video = VideoMetadata.query.get(video_id)
     if not video:
+        logging.error("Video not found.")
         return jsonify({'error': 'Video not found.'}), 404
 
     return stream_file(bucket_name=cover_bucket_name, filename=video.cover_filename, mime_type=video.cover_mime_type)
@@ -31,6 +32,7 @@ def stream_video(video_id) -> tuple[Response, int] | Response:
     """Streams the video based on the video ID"""
     video = VideoMetadata.query.get(video_id)
     if not video:
+        logging.error("Video not found.")
         return jsonify({'error': 'Video not found.'}), 404
 
     return stream_file(bucket_name=video_bucket_name, filename=video.video_filename, mime_type=video.video_mime_type)
@@ -76,8 +78,8 @@ def stream_file(bucket_name: str, filename: str, mime_type: str) -> Response | t
             }
             return Response(response, headers=headers)
     except S3Error as e:
-        logging.critical(str(e))
+        logging.error(f"S3Error error: {e}")
         return jsonify({'error': f'S3 Error: {str(e)}'}), 500
     except Exception as e:
-        logging.critical(str(e))
+        logging.error(f"An error occurred while streaming video: {e}")
         return jsonify({'error': f'Internal Server Error: {str(e)}'}), 500
