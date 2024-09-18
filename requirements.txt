@@ -3,3 +3,4 @@ minio
 Flask-SQLAlchemy
 psycopg2-binary
 flask-cors
+pymemcache

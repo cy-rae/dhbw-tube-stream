@@ -1,11 +1,13 @@
 """
 Routes for video metadata and video streaming.
 """
+import json
 import logging
 from datetime import datetime
 
 from flask import Blueprint, jsonify, request
 
+from app.models.memcache_client import memcache_client
 from app.models.video_metadata import db, VideoMetadata
 
 metadata_api = Blueprint(name='metadata_api', import_name=__name__)
@@ -15,8 +17,24 @@ logging.basicConfig(level=logging.INFO)
 @metadata_api.route('/video/<video_id>', methods=['GET'])
 def get_video_metadata(video_id):
     """Returns the metadata of a video based on the video ID"""
+
+    # Check if the data is in the cache
+    cached_data = memcache_client.get(video_id)
+    if cached_data:
+        logging.info(f"Cache hit for video_id: {video_id}")
+        try:
+            cached_data_dict = json.loads(cached_data)
+            return jsonify(cached_data_dict), 200
+        except json.decoder.JSONDecodeError as e:
+            logging.error(f"JSON decode error for video with ID: {video_id}: {e}")
+            memcache_client.delete(video_id)
+
+    # If the data is not in the cache, get video metadata from the postgres database
+    logging.info(f"Load from DB video with ID: {video_id}")
     video_metadata = VideoMetadata.query.get(video_id)
     if video_metadata:
+        video_metadata_json = json.dumps(video_metadata.to_json())
+        memcache_client.set(video_metadata.id, video_metadata_json)
         return jsonify(video_metadata.to_json()), 200
     else:
         logging.error("Video not found.")

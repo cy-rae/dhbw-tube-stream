@@ -27,7 +27,7 @@ class VideoMetadata(db.Model):
             'title': self.title,
             'creator': self.creator,
             'description': self.description,
-            'upload_date': self.upload_date
+            'upload_date': self.upload_date.isoformat()
         }
 
     def to_json_as_listing(self):
@@ -35,5 +35,5 @@ class VideoMetadata(db.Model):
             'id': self.id,
             'title': self.title,
             'creator': self.creator,
-            'upload_date': self.upload_date
+            'upload_date': self.upload_date.isoformat()
         }
