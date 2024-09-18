@@ -9,6 +9,8 @@ The **DHBW Tube Stream Microservice** is a Flask-based application designed to h
 - **Metadata Retrieval**: Retrieves video metadata from a PostgreSQL database.
 - **Range Requests**: Supports HTTP range requests for efficient video streaming.
 - **Error Handling**: Provides detailed error messages and logging for troubleshooting.
+- **Caching**: A memcache client is being used to cache video metadata to improve performance.
+The caching mechanism is only used to store video metadata (`/video/<video_id>`) because the files are streamed directly from MinIO which is already optimized for performance.
 
 ## Endpoints
 `/video/<video_id>`
@@ -58,6 +60,8 @@ The microservice can be configured using environment variables. The following va
 - `MINIO_ACCESS_KEY`: The access key for MinIO.
 - `MINIO_SECRET_KEY`: The secret key for MinIO.
 - `POSTGRES_URI`: The URI for the PostgreSQL database.
+- `MEMCACHED_HOST`: The host for the Memcached server.
+- `MEMCACHED_PORT`: The port for the Memcached server.
 
 ## Logging
 The microservice uses Python's built-in logging module to log important events and errors. Logs are printed to the console and can be viewed in the Docker container logs.
