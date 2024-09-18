@@ -25,8 +25,7 @@ def create_app():
     })
 
     # Set environment variables for connection to PostgreSQL database
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI',
-                                                      'postgresql://postgres:password@postgres-service/videos')
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # Initialize the database
