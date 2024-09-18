@@ -7,10 +7,6 @@ WORKDIR /app
 # Copy the requirements.txt in the working directory
 COPY requirements.txt .
 
-## Todo: Set proxy environment variables for Bosch environment
-#ENV http_proxy=http://rb-proxy-de.bosch.com:8080
-#ENV https_proxy=http://rb-proxy-de.bosch.com:8080
-
 # Install curl for health check
 RUN apt-get update && apt-get install -y curl
 
