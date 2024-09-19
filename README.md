@@ -1,7 +1,7 @@
 # DHBW-Tube: Stream Microservice
-
-## Overview
 The **DHBW Tube Stream Microservice** is a Flask-based application designed to handle video streaming and metadata retrieval. It provides endpoints for streaming video files and cover images from MinIO object storage, as well as retrieving video metadata from a PostgreSQL database. This microservice ensures efficient and secure access to video content and its associated metadata.
+
+<br>
 
 ## Features
 - **Video Streaming**: Streams video files directly from MinIO object storage.
@@ -11,6 +11,27 @@ The **DHBW Tube Stream Microservice** is a Flask-based application designed to h
 - **Error Handling**: Provides detailed error messages and logging for troubleshooting.
 - **Caching**: A memcache client is being used to cache video metadata to improve performance.
 The caching mechanism is only used to store video metadata (`/video/<video_id>`) because the files are streamed directly from MinIO which is already optimized for performance.
+
+<br>
+
+## Setup
+### Prerequisites
+You should have **pip** installed.
+
+### Installation
+Install the dependencies:
+```
+pip install -r requirements.txt
+```
+<br>
+
+## Deployment
+The microservice can be deployed on a Kubernetes cluster. A Dockerfile is provided in the root directory which can be used in Kubernetes resource configurations.
+
+The Dockerfile installs the necessary dependencies and copies the application code into the container.
+The port `5000` is exposed so that the application can be accessed from outside the container.
+
+<br>
 
 ## Endpoints
 `/video/<video_id>`
@@ -51,6 +72,8 @@ The caching mechanism is only used to store video metadata (`/video/<video_id>`)
     - *206 Partial Content*: If a range request is made.
     - *404 Not Found*: If the video is not found.
 
+<br>
+
 ## Configuration
 The microservice can be configured using environment variables. The following variables are available:
 
@@ -62,6 +85,8 @@ The microservice can be configured using environment variables. The following va
 - `POSTGRES_URI`: The URI for the PostgreSQL database.
 - `MEMCACHED_HOST`: The host for the Memcached server.
 - `MEMCACHED_PORT`: The port for the Memcached server.
+
+<br>
 
 ## Logging
 The microservice uses Python's built-in logging module to log important events and errors. Logs are printed to the console and can be viewed in the Docker container logs.
