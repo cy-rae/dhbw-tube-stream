@@ -15,7 +15,7 @@ def create_app():
     app = Flask(__name__)
 
     # Enable CORS for the frontend
-    frontend_base_url = os.getenv('FRONTEND_BASE_URL', 'http://frontend-service')
+    frontend_base_url = os.getenv('FRONTEND_BASE_URL', 'http://frontend-service:80')
     CORS(app, resources={
         r"/*": {
             "origins": [
