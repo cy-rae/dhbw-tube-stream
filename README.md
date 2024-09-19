@@ -1,4 +1,4 @@
-# dhbw-tube-stream Microservice
+# DHBW-Tube: Stream Microservice
 
 ## Overview
 The **DHBW Tube Stream Microservice** is a Flask-based application designed to handle video streaming and metadata retrieval. It provides endpoints for streaming video files and cover images from MinIO object storage, as well as retrieving video metadata from a PostgreSQL database. This microservice ensures efficient and secure access to video content and its associated metadata.
